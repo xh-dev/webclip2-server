@@ -2,10 +2,10 @@ package app
 
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
-import akka.http.scaladsl.{Http, server}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
+import akka.http.scaladsl.{Http, server}
 import akka.pattern.StatusReply
 import akka.util.Timeout
 import app.actor.WebClip2Actor._
@@ -15,8 +15,8 @@ import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper
 import dev.xethh.utils.binarySizeUtilsJacksonExtension.Module
 
 import scala.beans.BeanProperty
-import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
@@ -47,10 +47,10 @@ object HttpServer {
           if (v.isSuccess) {
             successOperation(v.getValue)
           } else {
-            complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(Option(v.getError).map(_.getMessage).getOrElse("Unkown error"))))
+            complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse(Option(v.getError).map(_.getMessage).getOrElse("Unkown error")))))
           }
         case Failure(exception) =>
-          complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`application/json`, ErrorResponse(exception.getMessage)))
+          complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`application/json`, anyToJson(ErrorResponse(exception.getMessage))))
       }
     }
 
@@ -61,7 +61,7 @@ object HttpServer {
             get {
               onCompleteTask[WebClip2Status](
                 actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler),
-                it => complete(HttpEntity(ContentTypes.`application/json`, StatusResponse(it)))
+                it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StatusResponse(it))))
               )
             }
           },
@@ -69,7 +69,7 @@ object HttpServer {
             get {
               onCompleteTask[WebClip2Config](
                 actor.ask[StatusReply[WebClip2Config]](ref => WebClip2ConfigCmd(ref))(timeout, scheduler),
-                it => complete(HttpEntity(ContentTypes.`application/json`, ConfigResponse(it)))
+                it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(ConfigResponse(it))))
               )
             }
           },
@@ -81,11 +81,11 @@ object HttpServer {
                     .filter(_.code != null)
 
                   if (post.isEmpty)
-                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse("Empty msg")))
+                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
                   else {
                     onCompleteTask[String](
                       actor.ask[StatusReply[String]](ref => RetrieveWebClip2Cmd(post.get.code, ref))(timeout, scheduler),
-                      it => complete(HttpEntity(ContentTypes.`application/json`, RetrieveResponse(it)))
+                      it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(RetrieveResponse(it))))
                     )
                   }
                 }
@@ -100,11 +100,11 @@ object HttpServer {
                     .filter(_.msg != null)
 
                   if (post.isEmpty)
-                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse("Empty msg")))
+                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
                   else {
                     onCompleteTask[String](
                       actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler),
-                      it => complete(HttpEntity(ContentTypes.`application/json`, StringResponse(it)))
+                      it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StringResponse(it))))
                     )
                   }
                 }
