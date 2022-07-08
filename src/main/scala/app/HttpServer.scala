@@ -56,14 +56,15 @@ object HttpServer {
 
     val route = {
       cors() {
-        path("status") {
-          get {
-            onCompleteTask[WebClip2Status](
-              actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler),
-              it => complete(HttpEntity(ContentTypes.`application/json`, StatusResponse(it)))
-            )
-          }
-        } ~
+        concat(
+          path("status") {
+            get {
+              onCompleteTask[WebClip2Status](
+                actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler),
+                it => complete(HttpEntity(ContentTypes.`application/json`, StatusResponse(it)))
+              )
+            }
+          },
           path("config") {
             get {
               onCompleteTask[WebClip2Config](
@@ -71,7 +72,7 @@ object HttpServer {
                 it => complete(HttpEntity(ContentTypes.`application/json`, ConfigResponse(it)))
               )
             }
-          } ~
+          },
           path("msg" / "retrieve") {
             post {
               decodeRequest {
@@ -90,7 +91,7 @@ object HttpServer {
                 }
               }
             }
-          } ~
+          },
           path("msg" / "create") {
             post {
               decodeRequest {
@@ -110,6 +111,7 @@ object HttpServer {
               }
             }
           }
+        )
       }
     }
 

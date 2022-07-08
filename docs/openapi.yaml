@@ -1,0 +1,136 @@
+openapi: 3.0.1
+info:
+  title: Webclip2 Server
+  description: |
+    The Webclip2 Server provides functionality of webclip in restful api.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://webclip2.mytools.express
+- url: http://localhost:8080
+tags:
+- name: API
+  description: Everything about your Pets
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+paths:
+  /status:
+    get:
+      responses:
+        "200":
+          description: get status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currentSize: 
+                    type: number
+                  slotUsed:
+                    type: number
+              examples:
+                "Normal Response":
+                  description: |
+                    Normal Response
+                  value:
+                    status:
+                      currentSize: 0
+                      slotUsed: 0
+                    
+  /config:
+    get:
+      responses:
+        "200":
+          description: get config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  maxVolume: 
+                    type: number
+                  msgMaxSize:
+                    type: number
+                  maxPoolSize:
+                    type: number
+                  timeout:
+                    type: object
+                    properties:
+                      length: 
+                        type: number
+                      unit: 
+                        type: string
+                        enum:
+                          ["DAYS","HOURS","MINUTES","MICROSECONDS","MILLISECONDS","NANOSECONDS","SECONDS"]
+                      finite:
+                        type: boolean
+              examples:
+                "Normal Response":
+                  description: |
+                    normal response
+                  value:
+                    status:
+                      maxVolume: 1073741824
+                      msgMaxSize: 1048576
+                      maxPoolSize: 999999
+                      timeout:
+                        length: 30
+                        unit: MINUTES
+                        finite: true
+  /msg/create:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                msg:
+                  type: string
+      responses:
+        "200":
+          description: |
+            dss
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+              examples:
+                "Successful store message":
+                  description: |
+                    Stored message successfully
+                  value:
+                    id: '567014'
+  /msg/retrieve:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+      responses:
+        "200":
+          description: |
+            dss
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+              examples:
+                "Successful retrieve message":
+                  description: |
+                    Retrieve message successfully
+                  value:
+                    msg: '567014'
