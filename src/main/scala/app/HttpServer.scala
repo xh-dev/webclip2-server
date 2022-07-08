@@ -2,20 +2,20 @@ package app
 
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{Http, server}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.StandardRoute
 import akka.pattern.StatusReply
 import akka.util.Timeout
 import app.actor.WebClip2Actor._
-import ch.megard.akka.http.cors.javadsl.settings.CorsSettings
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper}
 import dev.xethh.utils.binarySizeUtilsJacksonExtension.Module
 
 import scala.beans.BeanProperty
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.language.implicitConversions
 import scala.util.{Failure, Success}
@@ -38,40 +38,38 @@ object HttpServer {
     import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
 
+    def onCompleteTask[Res](
+                             task: => Future[StatusReply[Res]],
+                             successOperation: Res => StandardRoute
+                           ): server.Route = {
+      onComplete(task) {
+        case Success(v) =>
+          if (v.isSuccess) {
+            successOperation(v.getValue)
+          } else {
+            complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(Option(v.getError).map(_.getMessage).getOrElse("Unkown error"))))
+          }
+        case Failure(exception) =>
+          complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`application/json`, ErrorResponse(exception.getMessage)))
+      }
+    }
+
     val route = {
       cors() {
         path("status") {
           get {
-            onComplete(
-              actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler)
-            ) {
-              case Success(v) =>
-                if (v.isSuccess) {
-                  complete(HttpEntity(ContentTypes.`application/json`, StatusResponse(v.getValue)))
-                }
-                else {
-                  complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(Option(v.getError).map(_.getMessage).getOrElse("Unkown error"))))
-                }
-              case Failure(exception) =>
-                complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`application/json`, ErrorResponse(exception.getMessage)))
-            }
+            onCompleteTask[WebClip2Status](
+              actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler),
+              it => complete(HttpEntity(ContentTypes.`application/json`, StatusResponse(it)))
+            )
           }
         } ~
           path("config") {
             get {
-              onComplete(
-                actor.ask[StatusReply[WebClip2Config]](ref => WebClip2ConfigCmd(ref))(timeout, scheduler)
-              ) {
-                case Success(v) =>
-                  if (v.isSuccess) {
-                    complete(HttpEntity(ContentTypes.`application/json`, ConfigResponse(v.getValue)))
-                  }
-                  else {
-                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(Option(v.getError).map(_.getMessage).getOrElse("Unkown error"))))
-                  }
-                case Failure(exception) =>
-                  complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`application/json`, ErrorResponse(exception.getMessage)))
-              }
+              onCompleteTask[WebClip2Config](
+                actor.ask[StatusReply[WebClip2Config]](ref => WebClip2ConfigCmd(ref))(timeout, scheduler),
+                it => complete(HttpEntity(ContentTypes.`application/json`, ConfigResponse(it)))
+              )
             }
           } ~
           path("msg" / "retrieve") {
@@ -84,22 +82,12 @@ object HttpServer {
                   if (post.isEmpty)
                     complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse("Empty msg")))
                   else {
-                    onComplete(
-                      actor.ask[StatusReply[String]](ref => RetrieveWebClip2Cmd(post.get.code, ref))(timeout, scheduler)
-                    ) {
-                      case Success(v) =>
-                        if (v.isSuccess) {
-                          complete(HttpEntity(ContentTypes.`application/json`, RetrieveResponse(v.getValue)))
-                        }
-                        else {
-                          complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(Option(v.getError).map(_.getMessage).getOrElse("Unkown error"))))
-                        }
-                      case Failure(exception) =>
-                        complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(exception.getMessage)))
-                    }
+                    onCompleteTask[String](
+                      actor.ask[StatusReply[String]](ref => RetrieveWebClip2Cmd(post.get.code, ref))(timeout, scheduler),
+                      it => complete(HttpEntity(ContentTypes.`application/json`, RetrieveResponse(it)))
+                    )
                   }
                 }
-
               }
             }
           } ~
@@ -113,19 +101,10 @@ object HttpServer {
                   if (post.isEmpty)
                     complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse("Empty msg")))
                   else {
-                    onComplete(
-                      actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler)
-                    ) {
-                      case Success(v) =>
-                        if (v.isSuccess) {
-                          complete(HttpEntity(ContentTypes.`application/json`, StringResponse(v.getValue)))
-                        }
-                        else {
-                          complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(Option(v.getError).map(_.getMessage).getOrElse("Unkown error"))))
-                        }
-                      case Failure(exception) =>
-                        complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, ErrorResponse(exception.getMessage)))
-                    }
+                    onCompleteTask[String](
+                      actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler),
+                      it => complete(HttpEntity(ContentTypes.`application/json`, StringResponse(it)))
+                    )
                   }
                 }
               }
@@ -157,7 +136,7 @@ object HttpServer {
 
   case class RetrieveResponse[String](@BeanProperty msg: String) extends Response
 
-  case class StatusResponse[String](@BeanProperty status: WebClip2Status) extends Response
+  case class StatusResponse(@BeanProperty status: WebClip2Status) extends Response
 
   implicit def d2Json[A](d: A) = om.writeValueAsString(d)
 
