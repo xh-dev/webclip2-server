@@ -54,65 +54,63 @@ object HttpServer {
       }
     }
 
-    val route = {
-      cors() {
-        concat(
-          path("status") {
-            get {
-              onCompleteTask[WebClip2Status](
-                actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler),
-                it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StatusResponse(it))))
-              )
-            }
-          },
-          path("config") {
-            get {
-              onCompleteTask[WebClip2Config](
-                actor.ask[StatusReply[WebClip2Config]](ref => WebClip2ConfigCmd(ref))(timeout, scheduler),
-                it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(ConfigResponse(it))))
-              )
-            }
-          },
-          path("msg" / "retrieve") {
-            post {
-              decodeRequest {
-                entity(as[String]) { str =>
-                  val post = Option(om.readValue[RetrieveReq](str, new TypeReference[RetrieveReq] {}))
-                    .filter(_.code != null)
+    val route = cors() {
+      concat(
+        path("status") {
+          get {
+            onCompleteTask[WebClip2Status](
+              actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler),
+              it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StatusResponse(it))))
+            )
+          }
+        },
+        path("config") {
+          get {
+            onCompleteTask[WebClip2Config](
+              actor.ask[StatusReply[WebClip2Config]](ref => WebClip2ConfigCmd(ref))(timeout, scheduler),
+              it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(ConfigResponse(it))))
+            )
+          }
+        },
+        path("msg" / "retrieve") {
+          post {
+            decodeRequest {
+              entity(as[String]) { str =>
+                val post = Option(om.readValue[RetrieveReq](str, new TypeReference[RetrieveReq] {}))
+                  .filter(_.code != null)
 
-                  if (post.isEmpty)
-                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
-                  else {
-                    onCompleteTask[String](
-                      actor.ask[StatusReply[String]](ref => RetrieveWebClip2Cmd(post.get.code, ref))(timeout, scheduler),
-                      it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(RetrieveResponse(it))))
-                    )
-                  }
-                }
-              }
-            }
-          },
-          path("msg" / "create") {
-            post {
-              decodeRequest {
-                entity(as[String]) { str: String =>
-                  val post = Option(om.readValue[PostReq](str, new TypeReference[PostReq] {}))
-                    .filter(_.msg != null)
-
-                  if (post.isEmpty)
-                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
-                  else {
-                    onCompleteTask[String](
-                      actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler),
-                      it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StringResponse(it))))
-                    )
-                  }
+                if (post.isEmpty)
+                  complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
+                else {
+                  onCompleteTask[String](
+                    actor.ask[StatusReply[String]](ref => RetrieveWebClip2Cmd(post.get.code, ref))(timeout, scheduler),
+                    it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(RetrieveResponse(it))))
+                  )
                 }
               }
             }
           }
-        )
-      }
+        },
+        path("msg" / "create") {
+          post {
+            decodeRequest {
+              entity(as[String]) { str: String =>
+                val post = Option(om.readValue[PostReq](str, new TypeReference[PostReq] {}))
+                  .filter(_.msg != null)
+
+                if (post.isEmpty)
+                  complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
+                else {
+                  onCompleteTask[String](
+                    actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler),
+                    it => complete(HttpEntity(ContentTypes.`application/json`, "Test: "+anyToJson(StringResponse(it))))
+                  )
+                }
+              }
+            }
+          }
+        }
+      )
     }
 
     Http().newServerAt("0.0.0.0", 8080).bind(route)
