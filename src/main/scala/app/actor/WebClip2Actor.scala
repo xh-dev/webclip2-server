@@ -2,13 +2,13 @@ package app.actor
 
 import java.security.SecureRandom
 import java.util.Date
-
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.pattern.StatusReply
 import dev.xethh.utils.BinarySizeUtils.BinarySize
 import me.xethh.utils.dateUtils.D
 
+import scala.annotation.tailrec
 import scala.beans.BeanProperty
 import scala.concurrent.duration.{Duration, _}
 
@@ -37,9 +37,10 @@ object WebClip2Actor {
 
         def checkPool(): Boolean = map.size == maxPool - 1
 
-        def getNext(): Int = {
+        @tailrec
+        def getNext: Int = {
           val next = random.nextInt(maxPool - 1) + 1
-          if (map.contains(next)) getNext() else next
+          if (map.contains(next)) getNext else next
         }
 
         if (checkVol(msg)) {
@@ -52,48 +53,49 @@ object WebClip2Actor {
           throw new RuntimeException("Pool currently full!")
         }
 
-        val next = getNext()
-        context.log.info(s"next id: ${next}")
+        val next = getNext
+        context.log.info(s"next id: $next")
 
         map += (next -> (new java.util.Date(), msg))
         cur += msg.length
 
-        context.log.info(s"complete adding msg: ${next}")
+        context.log.info(s"complete adding msg: $next")
         "%06d".format(next)
       }
 
       def retrieve(str: String) = {
-        context.log.info(s"start retrieve ${str}")
+        context.log.info(s"start retrieve $str")
 
         def isNumber(str: String) = try {
           str.toInt
           true
         }
         catch {
-          case t: Throwable =>
+          case _: Throwable =>
             false
         }
 
         def checkId(int: Int): Boolean = int >= maxPool || int <= 0
 
-        if (!isNumber(str))
-          throw new RuntimeException(s"[${str}] does not valid")
+        if (!isNumber(str)) {
+          throw new RuntimeException(s"[$str] does not valid")
+        }
         val int = str.toInt
         if (checkId(int))
-          throw new RuntimeException(s"[${str}] does not in range")
+          throw new RuntimeException(s"[$str] does not in range")
 
         if (!map.contains(int))
-          throw new RuntimeException(s"[${str}] is empty")
+          throw new RuntimeException(s"[$str] is empty")
 
         val msg = map(int)
         map -= int
         cur -= msg._2.length
 
-        context.log.info(s"complete retrieve ${str}")
+        context.log.info(s"complete retrieve $str")
         msg._2
       }
 
-      def refresh() = {
+      def refresh(): Unit = {
         context.log.info("Refresh start")
         val msgToPurge = map.filter { it =>
           D.dt().now().addMS((duration.toMillis * -1L).toInt).laterThan(it._2._1)
@@ -142,7 +144,7 @@ object WebClip2Actor {
           }
           catch {
             case e: Throwable =>
-              context.log.error(s"Fail to retrieve message: ${code}")
+              context.log.error(s"Fail to retrieve message: $code")
               replyTo ! StatusReply.error(e)
           }
           Behaviors.same

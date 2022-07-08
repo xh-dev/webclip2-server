@@ -140,7 +140,7 @@ object HttpServer {
 
   case class StatusResponse(@BeanProperty status: WebClip2Status) extends Response
 
-  implicit def d2Json[A](d: A) = om.writeValueAsString(d)
+  implicit def d2Json[A](d: A): String = om.writeValueAsString(d)
 
-  case class ConfigResponse[String](@BeanProperty status: WebClip2Config) extends Response
+  case class ConfigResponse(@BeanProperty status: WebClip2Config) extends Response
 }
