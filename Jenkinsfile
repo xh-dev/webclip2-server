@@ -1,5 +1,10 @@
 def project_version
-def msg = "init msg"
+def setStatus(status){
+    def m = '{"state": "'+status+'","context": "continuous-integration/jenkins", "description": "Jenkins", "target_url": "https://jks.xh-network.xyz/job/webclip2-server/'+env.BUILD_NUMBER+'/console"}'
+    m = m.replaceAll('"', '\\"')
+    msg = "curl \"https://api.GitHub.com/repos/$GITHUB_CREDENTIALS_USR/webclip2-server/statuses/$GIT_COMMIT\" -H \"Authorization: token $GITHUB_CREDENTIALS_PSW\" -H \"Content-Type: application/json\" -X POST -d \"$m\""
+    return msg
+}
 
 pipeline {
     agent any
@@ -11,12 +16,17 @@ pipeline {
 	
     stages {
         stage('Info') {
-            environment { 
+            environment {
                 C_VERSION = sh(returnStdout: true, script: 'cat build.sbt | grep -E "^[ ]*version[ ]*:=[ ]*\\"([^\\"]+)\\"$" | sed -e "s/version[ ]*:=[ ]*\\"\\(.*\\)\\"/\\1/g"').trim()
                 branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
+                script {
+                    def msg = setStatus("pending")
+                    echo "$msg"
+                    sh msg
+                }
                 sh 'printenv'
                 script {
                     sh 'echo $C_VERSION'
@@ -50,9 +60,10 @@ pipeline {
         always {
             sh 'docker logout'
             script{
-                def m = '{"state": "success","context": "continuous-integration/jenkins", "description": "Jenkins", "target_url": "https://jks.xh-network.xyz/job/webclip2-server/'+env.BUILD_NUMBER+'/console"}'
-                m = m.replaceAll('"', '\\"')
-                msg = "curl \"https://api.GitHub.com/repos/$GITHUB_CREDENTIALS_USR/webclip2-server/statuses/$GIT_COMMIT\" -H \"Authorization: token $GITHUB_CREDENTIALS_PSW\" -H \"Content-Type: application/json\" -X POST -d \"$m\""
+//                 def m = '{"state": "success","context": "continuous-integration/jenkins", "description": "Jenkins", "target_url": "https://jks.xh-network.xyz/job/webclip2-server/'+env.BUILD_NUMBER+'/console"}'
+//                 m = m.replaceAll('"', '\\"')
+//                 msg = "curl \"https://api.GitHub.com/repos/$GITHUB_CREDENTIALS_USR/webclip2-server/statuses/$GIT_COMMIT\" -H \"Authorization: token $GITHUB_CREDENTIALS_PSW\" -H \"Content-Type: application/json\" -X POST -d \"$m\""
+                def msg = setStatus("success")
                 echo "$msg"
                 sh msg
             }
