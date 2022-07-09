@@ -8,15 +8,29 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-- url: https://webclip2.mytools.express
-- url: http://localhost:8080
+  - url: https://webclip2.mytools.express
+  - url: http://localhost:8080
 tags:
-- name: API
-  description: Everything about your Pets
-  externalDocs:
-    description: Find out more
-    url: http://swagger.io
+  - name: API
+    description: Everything about your Pets
+    externalDocs:
+      description: Find out more
+      url: http://swagger.io
 paths:
+  /version:
+    get:
+      responses:
+        "200":
+          description: get status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currentSize:
+                    type: number
+                  slotUsed:
+                    type: number
   /status:
     get:
       responses:
@@ -27,7 +41,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  currentSize: 
+                  currentSize:
                     type: number
                   slotUsed:
                     type: number
@@ -39,7 +53,7 @@ paths:
                     status:
                       currentSize: 0
                       slotUsed: 0
-                    
+
   /config:
     get:
       responses:
@@ -50,7 +64,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  maxVolume: 
+                  maxVolume:
                     type: number
                   msgMaxSize:
                     type: number
@@ -59,9 +73,9 @@ paths:
                   timeout:
                     type: object
                     properties:
-                      length: 
+                      length:
                         type: number
-                      unit: 
+                      unit:
                         type: string
                         enum:
                           ["DAYS","HOURS","MINUTES","MICROSECONDS","MILLISECONDS","NANOSECONDS","SECONDS"]
