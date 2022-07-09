@@ -16,9 +16,8 @@ pipeline {
             steps {
                 sh 'printenv'
                 script {
-                    sh(returnStdout: true, 'echo $C_VERSION')
-                    q8C
-                    ~_version = sh 'echo $C_VERSION'
+                    sh 'echo $C_VERSION'
+                    project_version = sh(returnStdout: true, script: 'echo $C_VERSION')
                 }
             }
         }
