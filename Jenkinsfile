@@ -14,7 +14,8 @@ pipeline {
             }
             steps {        
                 sh 'printenv'
-                sh 'build complete'
+                sh 'docker build -t webclip2-server:latest .'
+                echo 'build complete'
             }
         }
 
