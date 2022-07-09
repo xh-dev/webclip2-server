@@ -6,6 +6,11 @@ pipeline {
     }
     stages {
         stage('Info') {
+            environment { 
+                branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
+                commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
+		C_VERSION = sh(returnStdout: true, script: ' cat build.sbt | grep -E "^[ ]*version[ ]*:=[ ]*\\"([^\\"]+)\\"$" | sed -e "s/version[ ]*:=[ ]*\\"\\(.*\\)\\"/\\1/g"').trim()
+            }
             steps {
                 sh 'printenv'
             }
