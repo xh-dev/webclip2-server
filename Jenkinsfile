@@ -1,4 +1,5 @@
 def project_version = "0.0"
+
 pipeline {
     agent any
 
@@ -34,11 +35,11 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh 'printenv'
-                sh 'echo Project version: ${project_version}'
+                sh 'echo Project version: $project_version'
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                 sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest'
-                sh 'docker tag $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest xethhung/webclip2-server:${project_version}'
-                sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:${project_version}'
+                sh 'docker tag $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest xethhung/webclip2-server:$project_version'
+                sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:$project_version'
                 echo 'build complete'
             }
         }
