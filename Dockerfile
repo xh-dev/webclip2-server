@@ -1,6 +1,8 @@
 FROM sbtscala/scala-sbt:17.0.2_1.6.2_3.1.3 as sbt-build
-ARG branchName=${branchName}
-ARG commitId=${commitId}
+ARG branchName
+ARG commitId
+ENV branchName=${branchName}
+ENV commitId=${commitId}
 RUN echo "Sbt branchName: $branchName"
 RUN echo "Sbt commitId: $commitId"
 COPY . /app
