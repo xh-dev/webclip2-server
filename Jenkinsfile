@@ -3,20 +3,17 @@ pipeline {
 
     stages {
         stage('Info') {
-            environment {
-                
-            }
             steps {
-                echo "BUILD_NUMBER = ${env.BUILD_NUMBER}"
-                sh 'echo BUILD_NUMBER = $BUILD_NUMBER'
+                echo "BRANCH_NAME = ${env.BRANCH_NAME}"
+                sh 'echo BUILD_NUMBER = $BRANCH_NAME'
                 sh 'printenv'
-                echo '$BUILD_NUMBER'
-                sh 'echo ${env.GIT_BRANCH}'
+                echo '$BRANCH_NAME'
             }
         }
         stage('Build') {
             steps {        
                 sh 'printenv'
+                echo '$BRANCH_NAME'
                 sh 'build complete'
             }
         }
