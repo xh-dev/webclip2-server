@@ -1,6 +1,4 @@
 FROM sbtscala/scala-sbt:17.0.2_1.6.2_3.1.3 as sbt-build
-ENV branchName ${branchName}
-ENV commitId ${commitId}
 COPY . /app
 WORKDIR /app
 RUN ["sbt", "assembly"]

@@ -36,7 +36,7 @@ pipeline {
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
-                sh 'docker build -t xethhung/webclip2-server:latest .'
+                sh 'docker build --build-arg branchName=$branchName --build-arg commitId=$commitId -t xethhung/webclip2-server:latest .'
                 echo 'build complete'
             }
         }
