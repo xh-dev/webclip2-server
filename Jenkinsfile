@@ -4,16 +4,16 @@ pipeline {
     stages {
         stage('Info') {
             steps {
-                echo "BRANCH_NAME = ${env.BRANCH_NAME}"
-                sh 'echo BUILD_NUMBER = $BRANCH_NAME'
+                echo "BRANCHNAME = ${env.BRANCH_NAME}"
+                sh 'echo BUILD_NUMBER = $BRANCHNAME'
                 sh 'printenv'
-                echo '$BRANCH_NAME'
+                echo 'echo $BRANCHNAME'
             }
         }
         stage('Build') {
             steps {        
                 sh 'printenv'
-                echo '$BRANCH_NAME'
+                echo 'echo $BRANCHNAME'
                 sh 'build complete'
             }
         }
