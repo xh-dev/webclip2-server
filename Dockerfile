@@ -3,20 +3,12 @@ ARG branchName
 ARG commitId
 ENV branchName=${branchName}
 ENV commitId=${commitId}
-RUN echo "Sbt branchName: $branchName"
-RUN echo "Sbt commitId: $commitId"
 COPY . /app
 WORKDIR /app
 RUN ["sbt", "assembly"]
 
 FROM xethhung/jdk11-runner:latest
 COPY --from=sbt-build /app/target/scala-2.13/webclip2.jar /app/
-ARG branchName
-ARG commitId
-ENV branchName=${branchName}
-ENV commitId=${commitId}
-RUN echo "Runner branchName: $branchName"
-RUN echo "Runner commitId: $commitId"
 WORKDIR /app
 
 # Exposing web port
