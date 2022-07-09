@@ -25,6 +25,7 @@ pipeline {
             steps {
                 script {
                     setStatus("pending")
+                    sh 'something went wrong!!!!'
                     project_version = sh(returnStdout: true, script: 'echo $C_VERSION')
                 }
             }
@@ -51,10 +52,12 @@ pipeline {
     post {
         always {
             sh 'docker logout'
-            script{
-                sh 'printenv'
-                setStatus("success")
-            }
+        }
+        success {
+            setStatus("success")
+        }
+        failure {
+            setStatus("failure")
         }
     }    
 }
