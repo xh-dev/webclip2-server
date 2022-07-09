@@ -6,7 +6,7 @@ pipeline {
             steps {
                 sh 'printenv'
                 echo '$BRANCH_NAME'
-                sh 'echo ${env.GIT_BRANCH}'
+                sh 'echo \${env.GIT_BRANCH}'
             }
         }
         stage('Build') {
