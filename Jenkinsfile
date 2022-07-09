@@ -52,7 +52,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'deployment-host', variable: 'host')]) {
                     sshagent(credentials: ['ssh-deployment']){
-                        sh "ssh -o StrictHostKeyChecking=no $DEPLOY_CREDENTIALS_USR@$host uptime"
+                        sh "ssh $DEPLOY_CREDENTIALS_USR@$host uptime"
                     }
                 }
             }
