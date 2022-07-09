@@ -8,6 +8,7 @@ pipeline {
                 echo '$BRANCH_NAME'
                 echo '$evn.GIT_BRANCH'
                 echo '$GIT_BRANCH'
+                echo '$evn.GIT_BRANCH'+env.GIT_BRANCH
             }
         }
         stage('Build') {
