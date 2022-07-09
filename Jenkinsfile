@@ -38,14 +38,14 @@ pipeline {
                 branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
-            when { expression { return env.BRANCH_NAME == 'master'}}
+            when { expression { return env.GIT_BRANCH == 'origin/master'}}
             steps {
                 sh 'docker build --build-arg branchName=$GIT_BRANCH --build-arg commitId=$GIT_COMMIT -t xethhung/webclip2-server:latest .'
                 echo 'build complete'
             }
         }
         stage('Publish') {
-            when { expression { return env.BRANCH_NAME == 'master'}}
+            when { expression { return env.GIT_BRANCH == 'origin/master'}}
             steps {
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                 sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest'
@@ -54,7 +54,7 @@ pipeline {
             }
         }
         stage('Deploy') {
-            when { expression { return env.BRANCH_NAME == 'master'}}
+            when { expression { return env.GIT_BRANCH == 'origin/master'}}
             steps {
                 withCredentials([string(credentialsId: 'deployment-host', variable: 'host')]) {
                     sshagent(credentials: ['ssh-deployment']){
