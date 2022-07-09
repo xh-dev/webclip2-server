@@ -13,6 +13,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS=credentials('dockerhub-id')
         GITHUB_CREDENTIALS=credentials('github-id')
+        DEPLOY_CREDENTIALS=credentials('ssh-deployment')
     }
 	
     stages {
@@ -39,12 +40,19 @@ pipeline {
                 echo 'build complete'
             }
         }
-        stage('Deploy') {
+        stage('Publish') {
             steps {
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                 sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest'
                 sh 'docker tag $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest xethhung/webclip2-server:'+project_version
                 sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:'+project_version
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sshagent(credentials: ['ssh-deployment']){
+                    sh "ssh $DEPLOY_CREDENTIALS_USR echo 'from jenkins' >> ~/from-jenkins.txt"
+                }
             }
         }
     }
