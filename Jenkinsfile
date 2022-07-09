@@ -4,6 +4,7 @@ pipeline {
     stages {
         stage('Info') {
             steps {
+                sh 'printenv'
                 echo '$BRANCH_NAME'
                 echo '$GIT_BRANCH'
                 echo 'Hello World'
