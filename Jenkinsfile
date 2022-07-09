@@ -15,7 +15,8 @@ pipeline {
                 branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
-            steps {        
+            steps {
+		sh 'cat build.sbt'
                 sh 'docker build -t xethhung/webclip2-server:latest .'
                 echo 'build complete'
             }
