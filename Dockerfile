@@ -1,14 +1,16 @@
 FROM sbtscala/scala-sbt:17.0.2_1.6.2_3.1.3 as sbt-build
-RUN echo "Sbt branchName: ${branchName}"
-RUN echo "Sbt commitId ${commitId}"
+ARG branchName=${branchName}
+ARG commitId=${commitId}
+RUN echo "Sbt branchName: $branchName"
+RUN echo "Sbt commitId: $commitId"
 COPY . /app
 WORKDIR /app
 RUN ["sbt", "assembly"]
 
 FROM xethhung/jdk11-runner:latest
 COPY --from=sbt-build /app/target/scala-2.13/webclip2.jar /app/
-RUN echo "Runner branchName: ${branchName}"
-RUN echo "Runner commitId ${commitId}"
+RUN echo "Runner branchName: $branchName"
+RUN echo "Runner commitId: $commitId"
 WORKDIR /app
 
 # Exposing web port
