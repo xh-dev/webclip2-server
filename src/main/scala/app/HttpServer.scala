@@ -11,6 +11,7 @@ import akka.util.Timeout
 import app.actor.WebClip2Actor._
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper}
 import dev.xethh.utils.binarySizeUtilsJacksonExtension.Module
 
@@ -56,6 +57,14 @@ object HttpServer {
 
     val route = cors() {
       concat(
+        path("version") {
+          get {
+            val om = new ObjectMapper(new YAMLFactory())
+            val versionMeta = io.Source.fromInputStream(this.getClass.getClassLoader.getResourceAsStream("version.txt")).mkString
+            val data = om.readValue(versionMeta, classOf[Version])
+            complete(HttpEntity(ContentTypes.`application/json`, anyToJson(data)))
+          }
+        },
         path("status") {
           get {
             onCompleteTask[WebClip2Status](
@@ -103,7 +112,7 @@ object HttpServer {
                 else {
                   onCompleteTask[String](
                     actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler),
-                    it => complete(HttpEntity(ContentTypes.`application/json`, "Test: "+anyToJson(StringResponse(it))))
+                    it => complete(HttpEntity(ContentTypes.`application/json`, "Test: " + anyToJson(StringResponse(it))))
                   )
                 }
               }
@@ -141,4 +150,17 @@ object HttpServer {
   implicit def d2Json[A](d: A): String = om.writeValueAsString(d)
 
   case class ConfigResponse(@BeanProperty status: WebClip2Config) extends Response
+
+  case class VersionResponse(@BeanProperty version: String)
+
+  case class Version(
+                      @BeanProperty branch: String,
+                      @BeanProperty version: String,
+                      @BeanProperty commit: String,
+                    ) {
+    def this()={
+      this("","","")
+    }
+
+  }
 }
