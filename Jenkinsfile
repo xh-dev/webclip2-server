@@ -16,7 +16,7 @@ pipeline {
     }
 	
     stages {
-        stage('Info') {
+        stage('Init') {
             environment {
                 C_VERSION = sh(returnStdout: true, script: 'cat build.sbt | grep -E "^[ ]*version[ ]*:=[ ]*\\"([^\\"]+)\\"$" | sed -e "s/version[ ]*:=[ ]*\\"\\(.*\\)\\"/\\1/g"').trim()
                 branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
@@ -25,10 +25,6 @@ pipeline {
             steps {
                 script {
                     setStatus("pending")
-                }
-                sh 'printenv'
-                script {
-                    sh 'echo $C_VERSION'
                     project_version = sh(returnStdout: true, script: 'echo $C_VERSION')
                 }
             }
@@ -45,13 +41,10 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sh 'printenv'
-                sh "echo Project version: $project_version"
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                 sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest'
                 sh 'docker tag $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest xethhung/webclip2-server:'+project_version
                 sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:'+project_version
-                echo 'build complete'
             }
         }
     }
@@ -59,9 +52,7 @@ pipeline {
         always {
             sh 'docker logout'
             script{
-//                 def m = '{"state": "success","context": "continuous-integration/jenkins", "description": "Jenkins", "target_url": "https://jks.xh-network.xyz/job/webclip2-server/'+env.BUILD_NUMBER+'/console"}'
-//                 m = m.replaceAll('"', '\\"')
-//                 msg = "curl \"https://api.GitHub.com/repos/$GITHUB_CREDENTIALS_USR/webclip2-server/statuses/$GIT_COMMIT\" -H \"Authorization: token $GITHUB_CREDENTIALS_PSW\" -H \"Content-Type: application/json\" -X POST -d \"$m\""
+                sh 'printenv'
                 setStatus("success")
             }
         }
