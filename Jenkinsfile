@@ -17,7 +17,6 @@ pipeline {
             }
             steps {
                 sh 'printenv'
-                sh "curl \"https://api.GitHub.com/repos/GITHUB_CREDENTIALS_USR/$GITHUB_CREDENTIALS_USR/statuses/$GIT_COMMIT?access_token=$GITHUB_CREDENTIALS_PSW\" -H \"Content-Type: application/json\" -X POST -d \"{\\\"state\\\": \\\"success\\\",\\\"context\\\": \\\"continuous-integration/jenkins\\\", \\\"description\\\": \\\"Jenkins\\\", \\\"target_url\\\": \\\"https://jks.xh-network.xyz/job/webclip2-server/$BUILD_NUMBER/console\\\"}"
                 script {
                     sh 'echo $C_VERSION'
                     project_version = sh(returnStdout: true, script: 'echo $C_VERSION')
@@ -49,6 +48,9 @@ pipeline {
     post {
         always {
             sh 'docker logout'
+            def msg = "curl \"https://api.GitHub.com/repos/GITHUB_CREDENTIALS_USR/$GITHUB_CREDENTIALS_USR/statuses/$GIT_COMMIT?access_token=$GITHUB_CREDENTIALS_PSW\" -H \"Content-Type: application/json\" -X POST -d \"{\\\"state\\\": \\\"success\\\",\\\"context\\\": \\\"continuous-integration/jenkins\\\", \\\"description\\\": \\\"Jenkins\\\", \\\"target_url\\\": \\\"https://jks.xh-network.xyz/job/webclip2-server/$BUILD_NUMBER/console\\\"}"
+            echo "$msg"
+            sh msg
         }
     }    
 }
