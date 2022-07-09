@@ -23,17 +23,16 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                sh 'docker push xethhung/webclip2-server:latest'
-                sh 'docker tag xethhung/webclip2-server:latest xethhung/webclip2-server:1.0'
-                sh 'docker push xethhung/webclip2-server:1.0'
+                sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest'
+                sh 'docker tag $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest xethhung/webclip2-server:1.0'
+                sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:1.0'
                 echo 'build complete'
             }
         }
     }
-
-	post {
-		always {
-			sh 'docker logout'
-        }
-	}    
+    post {
+	 always {
+	      sh 'docker logout'
+         }
+    }    
 }
