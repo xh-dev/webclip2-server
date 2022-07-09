@@ -52,7 +52,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'deployment-host', variable: 'host')]) {
                     sshagent(credentials: ['ssh-deployment']){
-                        sh "whoami && ssh -i /root/.ssh/id_rsa $DEPLOY_CREDENTIALS_USR@$host uptime"
+                        sh "ssh -i /ssh/id_rsa $DEPLOY_CREDENTIALS_USR@$host uptime"
                     }
                 }
             }
