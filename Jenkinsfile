@@ -6,8 +6,8 @@ pipeline {
             steps {
                 sh 'printenv'
                 echo '$BRANCH_NAME'
+                echo '$evn.GIT_BRANCH'
                 echo '$GIT_BRANCH'
-                echo 'Hello World'
             }
         }
         stage('Build') {
