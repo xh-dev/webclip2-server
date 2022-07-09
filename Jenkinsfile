@@ -51,7 +51,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sshagent(credentials: ['ssh-deployment']){
-                    sh "ssh $DEPLOY_CREDENTIALS_USR echo 'from jenkins' >> ~/from-jenkins.txt"
+                    sh "ssh -o StrictHostKeyChecking=no $DEPLOY_CREDENTIALS_USR uptime"
                 }
             }
         }
