@@ -4,6 +4,8 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS=credentials('dockerhub-id')
     }
+	
+    def project_version
     stages {
         stage('Info') {
             environment { 
@@ -11,7 +13,11 @@ pipeline {
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
 		C_VERSION = sh(returnStdout: true, script: ' cat build.sbt | grep -E "^[ ]*version[ ]*:=[ ]*\\"([^\\"]+)\\"$" | sed -e "s/version[ ]*:=[ ]*\\"\\(.*\\)\\"/\\1/g"').trim()
             }
+		
             steps {
+		scripts {
+			project_version = '$C_VERSION'
+		}
                 sh 'printenv'
             }
         }
@@ -19,7 +25,7 @@ pipeline {
             environment { 
                 branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
-		C_VERSION = sh(returnStdout: true, script: ' cat build.sbt | grep -E "^[ ]*version[ ]*:=[ ]*\\"([^\\"]+)\\"$" | sed -e "s/version[ ]*:=[ ]*\\"\\(.*\\)\\"/\\1/g"').trim()
+		C_VERSION = project_version
             }
             steps {
 		sh 'cat build.sbt'
