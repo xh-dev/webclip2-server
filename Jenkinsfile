@@ -15,10 +15,11 @@ pipeline {
             }
 		
             steps {
-                scripts {
-                    project_version = '$C_VERSION'
-                }
-                sh 'printenv'
+		sh 'printenv'
+		scripts {
+		    project_version = '$C_VERSION'
+		}
+                
             }
         }
         stage('Build') {
