@@ -50,8 +50,10 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sshagent(credentials: ['ssh-deployment']){
-                    sh "ssh -o StrictHostKeyChecking=no $DEPLOY_CREDENTIALS_USR uptime"
+                withCredentials([string(credentialsId: 'deployment-host', variable: 'host')]) {
+                    sshagent(credentials: ['ssh-deployment']){
+                        sh "ssh -o StrictHostKeyChecking=no $DEPLOY_CREDENTIALS_USR@$host uptime"
+                    }
                 }
             }
         }
