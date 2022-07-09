@@ -17,7 +17,7 @@ pipeline {
                 sh 'printenv'
                 script {
                     sh 'echo $C_VERSION'
-                    project_version = sh(returnStdout: true, script: 'echo $C_VERSION')
+                    //project_version = sh(returnStdout: true, script: 'echo $C_VERSION')
                 }
             }
         }
