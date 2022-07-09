@@ -1,4 +1,5 @@
 def project_version
+def project_branchName
 def setStatus(status){
     def m = '{"state": "'+status+'","context": "continuous-integration/jenkins", "description": "Jenkins", "target_url": "https://jks.xh-network.xyz/job/webclip2-server/'+env.BUILD_NUMBER+'/console"}'
     m = m.replaceAll("\"", "\\\\\"")
@@ -27,6 +28,7 @@ pipeline {
                 script {
                     setStatus("pending")
                     project_version = sh(returnStdout: true, script: 'echo $C_VERSION')
+                    project_branchName = env.branchName
                 }
             }
         }
@@ -36,7 +38,7 @@ pipeline {
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
-                if(env.branchName == "origin/master"){
+                if(project_branchName == "origin/master"){
                     sh 'printenv'
                     sh 'docker build --build-arg branchName=$GIT_BRANCH --build-arg commitId=$GIT_COMMIT -t xethhung/webclip2-server:latest .'
                     echo 'build complete'
@@ -51,7 +53,7 @@ pipeline {
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
-                if(env.branchName == "origin/master"){
+                if(project_branchName == "origin/master"){
                     sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                     sh 'docker push $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest'
                     sh 'docker tag $DOCKERHUB_CREDENTIALS_USR/webclip2-server:latest xethhung/webclip2-server:'+project_version
@@ -67,7 +69,7 @@ pipeline {
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
-                if(env.branchName == "origin/master"){
+                if(project_branchName == "origin/master"){
                     withCredentials([string(credentialsId: 'deployment-host', variable: 'host')]) {
                         sshagent(credentials: ['ssh-deployment']){
                             sh "ssh -i /ssh/id_rsa $DEPLOY_CREDENTIALS_USR@$host /data/webclip2-server/refresh.sh"
