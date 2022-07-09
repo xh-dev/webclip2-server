@@ -22,11 +22,11 @@ pipeline {
         }
         stage('Build') {
             environment { 
-            branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
-            commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
+                branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
+                commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
-		sh 'cat build.sbt'
+                sh 'cat build.sbt'
                 sh 'docker build -t xethhung/webclip2-server:latest .'
                 echo 'build complete'
             }
@@ -43,8 +43,8 @@ pipeline {
         }
     }
     post {
-	 always {
-	      sh 'docker logout'
-         }
+        always {
+            sh 'docker logout'
+        }
     }    
 }
