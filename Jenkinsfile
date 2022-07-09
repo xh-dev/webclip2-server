@@ -1,4 +1,4 @@
-def project_version = "0.0"
+def project_version
 
 pipeline {
     agent any
