@@ -4,18 +4,16 @@ pipeline {
     stages {
         stage('Info') {
             environment { 
-                BRANCHNAME= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
+                branchName= sh (returnStdout: true, script: 'echo $GIT_BRANCH').trim()
+                commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
-                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
-                echo "BRANCHNAME = ${env.BRANCHNAME}"
                 sh 'printenv'
             }
         }
         stage('Build') {
             steps {        
                 sh 'printenv'
-                echo 'echo $BRANCHNAME'
                 sh 'build complete'
             }
         }
