@@ -1,4 +1,4 @@
-def project_version
+def project_version = "0.0"
 pipeline {
     agent any
 
@@ -27,7 +27,6 @@ pipeline {
                 commitId= sh (returnStdout: true, script: 'echo $GIT_COMMIT').trim()
             }
             steps {
-                sh 'cat build.sbt'
                 sh 'docker build -t xethhung/webclip2-server:latest .'
                 echo 'build complete'
             }
