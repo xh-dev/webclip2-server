@@ -15,7 +15,7 @@ pipeline {
             }
             steps {
                 sh 'printenv'
-                scripts {
+                script {
                     project_version = '$C_VERSION'
                 }
             }
