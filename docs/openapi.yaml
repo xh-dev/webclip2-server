@@ -27,10 +27,20 @@ paths:
               schema:
                 type: object
                 properties:
-                  currentSize:
-                    type: number
-                  slotUsed:
-                    type: number
+                  branch:
+                    type: string
+                  version:
+                    type: string
+                  commit:
+                    type: string
+              examples:
+                "200":
+                  description: |
+                    Normal response
+                  value:
+                    branch: unknown
+                    version: '0.1'
+                    commit: unknown
   /status:
     get:
       responses:
