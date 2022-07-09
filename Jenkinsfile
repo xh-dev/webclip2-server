@@ -10,9 +10,10 @@ pipeline {
             }
         }
         stage('Build') {
-            //steps {
+            steps {
             //    sh 'docker build -t webclip2-server:latest .'
-            //}
+                sh 'build complete'
+            }
         }
 
     }
