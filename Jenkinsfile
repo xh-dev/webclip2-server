@@ -1,3 +1,4 @@
+def project_version
 pipeline {
     agent any
 
@@ -5,7 +6,6 @@ pipeline {
         DOCKERHUB_CREDENTIALS=credentials('dockerhub-id')
     }
 	
-    def project_version
     stages {
         stage('Info') {
             environment { 
