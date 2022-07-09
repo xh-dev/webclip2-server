@@ -3,13 +3,13 @@ pipeline {
 
     stages {
         stage('Info') {
+                environment { 
+                    BRANCHNAME= sh (returnStdout: true, script: 'echo ${env.GIT_BRANCH}').trim()
+                }
             steps {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
-                echo "BRANCHNAME = ${env.GIT_BRANCH}"
-                env.BRANCHNAME = env.GIT_BRANCH
-                sh 'echo BUILD_NUMBER = $BRANCHNAME'
+                echo "BRANCHNAME = ${env.BRANCHNAME}"
                 sh 'printenv'
-                echo 'echo $BRANCHNAME'
             }
         }
         stage('Build') {
