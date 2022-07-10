@@ -112,7 +112,7 @@ object HttpServer {
                 else {
                   onCompleteTask[String](
                     actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler),
-                    it => complete(HttpEntity(ContentTypes.`application/json`, "Test: " + anyToJson(StringResponse(it))))
+                    it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StringResponse(it))))
                   )
                 }
               }
