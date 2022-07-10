@@ -4,7 +4,7 @@ import scala.beans.BeanProperty
 
 name := "webclip2"
 
-version := "0.0.8"
+version := "0.0.9"
 
 scalaVersion := "2.13.5"
 
