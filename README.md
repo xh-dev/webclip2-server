@@ -22,4 +22,6 @@ curl http://localhost:8080/status -s ; echo
 export code=$(curl -X POST -d "{\"msg\":\"hixhi\"}" http://localhost:8080/msg/create -s | jq -r ".id")
 echo $code
 curl -X POST -d "{\"code\":\"$code\"}" http://localhost:8080/msg/retrieve ; echo
+export code=$(curl -X GET http://localhost:8080/msg/create?msg=testing -s | jq -r ".id") 
+curl -X GET http://localhost:8080/msg/retrieve?code=$code ; echo
 ```
