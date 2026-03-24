@@ -4,30 +4,31 @@ import scala.beans.BeanProperty
 
 name := "webclip2"
 
-version := "0.0.7"
+version := "0.0.8"
 
-scalaVersion := "2.13.5"
+scalaVersion := "3.3.7"
 
 val AkkaVersion = "2.6.19"
 val AkkaHttpVersion = "10.2.9"
+val jacksonVersion = "3.1.0"
+val jacksonAnnotationVersion = "2.21"
 libraryDependencies ++= Seq(
   ("com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion).cross(CrossVersion.for3Use2_13),
   ("com.typesafe.akka" %% "akka-stream" % AkkaVersion).cross(CrossVersion.for3Use2_13),
   ("com.typesafe.akka" %% "akka-http" % AkkaHttpVersion).cross(CrossVersion.for3Use2_13),
   ("com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion).cross(CrossVersion.for3Use2_13),
   ("com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test).cross(CrossVersion.for3Use2_13),
-  ("com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3").cross(CrossVersion.for3Use2_13),
+  "tools.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   ("com.typesafe.akka" %% "akka-slf4j" % AkkaVersion).cross(CrossVersion.for3Use2_13),
-  "com.fasterxml.jackson.core" % "jackson-core" % "2.13.3",
-  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.13.3",
-  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.13.3",
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.3",
+  "tools.jackson.core" % "jackson-core" % jacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonAnnotationVersion,
+  "tools.jackson.dataformat" % "jackson-dataformat-yaml" % jacksonVersion,
+  "tools.jackson.core" % "jackson-databind" % jacksonVersion,
   "ch.qos.logback" % "logback-classic" % "1.2.11",
   "dev.xethh.utils" % "BinarySizeUtils" % "1.0.0",
   "dev.xethh.utils" % "BinarySizeUtilsJacksonExtension" % "1.0.0",
   ("ch.megard" %% "akka-http-cors" % "1.1.3").cross(CrossVersion.for3Use2_13),
 )
-
 Compile / resourceDirectory := baseDirectory.value / "resources"
 
 val mainName = Some("app.Main")

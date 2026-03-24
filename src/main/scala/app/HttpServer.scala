@@ -1,19 +1,25 @@
 package app
 
-import akka.actor.typed.scaladsl.AskPattern._
+import akka.actor.typed.scaladsl.AskPattern.*
 import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.StandardRoute
 import akka.http.scaladsl.{Http, server}
 import akka.pattern.StatusReply
 import akka.util.Timeout
-import app.actor.WebClip2Actor._
-import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper}
-import dev.xethh.utils.binarySizeUtilsJacksonExtension.Module
+import app.actor.WebClip2Actor.*
+import dev.xethh.utils.BinarySizeUtils.BinarySize
+import dev.xethh.utils.binarySizeUtilsJacksonExtension.{Module, Serializer}
+import tools.jackson.core.`type`.TypeReference
+import tools.jackson.core.{JsonGenerator, JsonParser}
+import tools.jackson.databind.deser.std.StdDeserializer
+import tools.jackson.databind.{DeserializationContext, ObjectMapper, SerializationContext}
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.module.SimpleModule
+import tools.jackson.databind.ser.std.StdSerializer
+import tools.jackson.dataformat.yaml.YAMLFactory
+import tools.jackson.module.scala.DefaultScalaModule
 
 import scala.beans.BeanProperty
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -22,8 +28,37 @@ import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
 object HttpServer {
+  class BinarySerializer extends StdSerializer[BinarySize](classOf[BinarySize]) {
+//    @throws(classOf[IOException])
+    override def serialize(binarySize: BinarySize, gen: JsonGenerator, context: SerializationContext): Unit = {
+      if (binarySize == null) {
+        gen.writeNull()
+      } else {
+        gen.writeRawValue(binarySize.inBytes().toBigInteger.longValue().toString);
+      }
+    }
+  }
 
-  val om: ObjectMapper = Module.inject(new ObjectMapper() with ScalaObjectMapper).registerModule(DefaultScalaModule)
+  class BinaryDeserializer extends StdDeserializer[BinarySize](classOf[BinarySize]) {
+//    @throws(classOf[IOException])
+    override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): BinarySize = {
+      if ("null".equals(jsonParser.getValueAsString())) {
+        null;
+      }
+      else {
+        BinarySize.ofByte(jsonParser.getBigIntegerValue.longValue());
+      }
+    }
+  }
+
+  //  val om: ObjectMapper = Module.inject(new ObjectMapper() with ScalaObjectMapper).registerModule(DefaultScalaModule)
+  val om: ObjectMapper = JsonMapper.builder()
+    .addModule(DefaultScalaModule)
+    .addModule(
+      new SimpleModule()
+        .addSerializer(new BinarySerializer())
+        .addDeserializer(classOf[BinarySize], new BinaryDeserializer())
+    ).build()
 
   implicit def anyToJson[A](a: A): String = om.writeValueAsString(a)
 
@@ -36,7 +71,7 @@ object HttpServer {
     implicit val timeout: Timeout = Timeout(duration)
     implicit val scheduler: Scheduler = system.scheduler
 
-    import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+    import ch.megard.akka.http.cors.scaladsl.CorsDirectives.*
 
 
     def onCompleteTask[Res](
@@ -103,7 +138,7 @@ object HttpServer {
         path("msg" / "create") {
           post {
             decodeRequest {
-              entity(as[String]) { str: String =>
+              entity(as[String]) { (str: String) =>
                 val post = Option(om.readValue[PostReq](str, new TypeReference[PostReq] {}))
                   .filter(_.msg != null)
 
