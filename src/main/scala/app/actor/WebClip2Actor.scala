@@ -2,9 +2,9 @@ package app.actor
 
 import java.security.SecureRandom
 import java.util.Date
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, Behavior}
-import akka.pattern.StatusReply
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.{ActorRef, Behavior}
+import org.apache.pekko.pattern.StatusReply
 import dev.xethh.utils.BinarySizeUtils.BinarySize
 import me.xethh.utils.dateUtils.D
 
@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 import scala.beans.BeanProperty
 import scala.concurrent.duration.{Duration, _}
 
-object WebClip2Actor {
+object WebClip2Actor :
 
   def apply(config: WebClip2Config): Behavior[WebClip2Cmd] = {
     Behaviors.setup { context =>
@@ -116,7 +116,7 @@ object WebClip2Actor {
       }(context.system.executionContext)
 
 
-      Behaviors.receiveMessage {
+      Behaviors.receiveMessage:
         case WebClip2RefreshCmd =>
           refresh()
           Behaviors.same
@@ -150,34 +150,23 @@ object WebClip2Actor {
           Behaviors.same
         case _ =>
           Behaviors.same
-      }
     }
 
   }
 
   trait WebClip2Cmd
-
   case class WebClip2Config(
                              @BeanProperty maxVolume: BinarySize,
                              @BeanProperty msgMaxSize: BinarySize,
                              @BeanProperty maxPoolSize: Int,
                              @BeanProperty timeout: Duration
                            )
-
   case class WebClip2Status(
                              @BeanProperty currentSize: BinarySize,
                              @BeanProperty slotUsed: Int
                            )
-
   case class RetrieveWebClip2Cmd(code: String, replyTo: ActorRef[StatusReply[String]]) extends WebClip2Cmd
-
   case class NewWebClip2Cmd(msg: String, replyTo: ActorRef[StatusReply[String]]) extends WebClip2Cmd
-
   case class WebClip2ConfigCmd(replyTo: ActorRef[StatusReply[WebClip2Config]]) extends WebClip2Cmd
-
   case class WebClip2StatusCmd(replyTo: ActorRef[StatusReply[WebClip2Status]]) extends WebClip2Cmd
-
   protected[this] case object WebClip2RefreshCmd extends WebClip2Cmd
-
-
-}

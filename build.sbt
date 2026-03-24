@@ -4,30 +4,37 @@ import scala.beans.BeanProperty
 
 name := "webclip2"
 
-version := "0.0.7"
+version := "0.0.8"
 
-scalaVersion := "2.13.5"
+scalaVersion := "3.3.7"
 
 val AkkaVersion = "2.6.19"
 val AkkaHttpVersion = "10.2.9"
+val jacksonVersion = "3.1.0"
+val jacksonAnnotationVersion = "2.21"
+val pekkoVersion = "1.1.5"
+val pekkoSecondVersion = "1.1.0"
+val logbackVersion = "1.5.13"
+
+
 libraryDependencies ++= Seq(
-  ("com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion).cross(CrossVersion.for3Use2_13),
-  ("com.typesafe.akka" %% "akka-stream" % AkkaVersion).cross(CrossVersion.for3Use2_13),
-  ("com.typesafe.akka" %% "akka-http" % AkkaHttpVersion).cross(CrossVersion.for3Use2_13),
-  ("com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion).cross(CrossVersion.for3Use2_13),
-  ("com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test).cross(CrossVersion.for3Use2_13),
-  ("com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.13.3").cross(CrossVersion.for3Use2_13),
-  ("com.typesafe.akka" %% "akka-slf4j" % AkkaVersion).cross(CrossVersion.for3Use2_13),
-  "com.fasterxml.jackson.core" % "jackson-core" % "2.13.3",
-  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.13.3",
-  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.13.3",
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.3",
-  "ch.qos.logback" % "logback-classic" % "1.2.11",
+  "org.apache.pekko" %% "pekko-actor-typed" % pekkoVersion,
+  "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
+  "org.apache.pekko" %% "pekko-http" % pekkoSecondVersion,
+  "org.apache.pekko" %% "pekko-http-spray-json" % pekkoSecondVersion,
+  "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoVersion % Test,
+  "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion,
+  "tools.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+  "tools.jackson.core" % "jackson-core" % jacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonAnnotationVersion,
+  "tools.jackson.dataformat" % "jackson-dataformat-yaml" % jacksonVersion,
+  "tools.jackson.core" % "jackson-databind" % jacksonVersion,
+  "ch.qos.logback" % "logback-classic" % logbackVersion,
   "dev.xethh.utils" % "BinarySizeUtils" % "1.0.0",
   "dev.xethh.utils" % "BinarySizeUtilsJacksonExtension" % "1.0.0",
-  ("ch.megard" %% "akka-http-cors" % "1.1.3").cross(CrossVersion.for3Use2_13),
-)
+  "org.apache.pekko" %% "pekko-http-cors" % pekkoSecondVersion,
 
+)
 Compile / resourceDirectory := baseDirectory.value / "resources"
 
 val mainName = Some("app.Main")

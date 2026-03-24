@@ -1,19 +1,25 @@
 package app
 
-import akka.actor.typed.scaladsl.AskPattern._
-import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.StandardRoute
-import akka.http.scaladsl.{Http, server}
-import akka.pattern.StatusReply
-import akka.util.Timeout
-import app.actor.WebClip2Actor._
-import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper}
-import dev.xethh.utils.binarySizeUtilsJacksonExtension.Module
+import app.actor.WebClip2Actor.*
+import dev.xethh.utils.BinarySizeUtils.BinarySize
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.Askable
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Scheduler}
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
+import org.apache.pekko.http.scaladsl.server.Directives.{post, *}
+import org.apache.pekko.http.scaladsl.server.PathMatcher.Lift.MOps.OptionMOps
+import org.apache.pekko.http.scaladsl.server.StandardRoute
+import org.apache.pekko.http.scaladsl.{Http, server}
+import org.apache.pekko.pattern.StatusReply
+import org.apache.pekko.util.Timeout
+import tools.jackson.core.`type`.TypeReference
+import tools.jackson.core.{JsonGenerator, JsonParser}
+import tools.jackson.databind.deser.std.StdDeserializer
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.module.SimpleModule
+import tools.jackson.databind.ser.std.StdSerializer
+import tools.jackson.databind.{DeserializationContext, ObjectMapper, SerializationContext}
+import tools.jackson.dataformat.yaml.YAMLFactory
+import tools.jackson.module.scala.DefaultScalaModule
 
 import scala.beans.BeanProperty
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -21,9 +27,29 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
-object HttpServer {
+class BinarySerializer extends StdSerializer[BinarySize](classOf[BinarySize]):
+  override def serialize(binarySize: BinarySize, gen: JsonGenerator, context: SerializationContext): Unit = {
+    if (binarySize == null) {
+      gen.writeNull()
+    } else {
+      gen.writeRawValue(binarySize.inBytes().toBigInteger.longValue().toString);
+    }
+  }
 
-  val om: ObjectMapper = Module.inject(new ObjectMapper() with ScalaObjectMapper).registerModule(DefaultScalaModule)
+class BinaryDeserializer extends StdDeserializer[BinarySize](classOf[BinarySize]):
+  override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): BinarySize =
+    if ("null".equals(jsonParser.getValueAsString())) { null }
+    else { BinarySize.ofByte(jsonParser.getBigIntegerValue.longValue()) }
+
+val om: ObjectMapper = JsonMapper.builder()
+  .addModule(DefaultScalaModule)
+  .addModule(
+    new SimpleModule()
+      .addSerializer(new BinarySerializer())
+      .addDeserializer(classOf[BinarySize], new BinaryDeserializer())
+  ).build()
+
+object HttpServer:
 
   implicit def anyToJson[A](a: A): String = om.writeValueAsString(a)
 
@@ -36,7 +62,7 @@ object HttpServer {
     implicit val timeout: Timeout = Timeout(duration)
     implicit val scheduler: Scheduler = system.scheduler
 
-    import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+    import org.apache.pekko.http.cors.scaladsl.CorsDirectives.*
 
 
     def onCompleteTask[Res](
@@ -55,112 +81,96 @@ object HttpServer {
       }
     }
 
-    val route = cors() {
+    val route = cors():
       concat(
-        path("version") {
-          get {
+        path("version"):
+          get :
             val om = new ObjectMapper(new YAMLFactory())
             val versionMeta = io.Source.fromInputStream(this.getClass.getClassLoader.getResourceAsStream("version.txt")).mkString
             val data = om.readValue(versionMeta, classOf[Version])
             complete(HttpEntity(ContentTypes.`application/json`, anyToJson(data)))
-          }
-        },
-        path("status") {
-          get {
+        ,
+        path("status"):
+          get :
             onCompleteTask[WebClip2Status](
               actor.ask[StatusReply[WebClip2Status]](ref => WebClip2StatusCmd(ref))(timeout, scheduler),
               it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StatusResponse(it))))
             )
-          }
-        },
-        path("config") {
-          get {
+        ,
+        path("config"):
+          get:
             onCompleteTask[WebClip2Config](
               actor.ask[StatusReply[WebClip2Config]](ref => WebClip2ConfigCmd(ref))(timeout, scheduler),
               it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(ConfigResponse(it))))
             )
+        ,
+        path("msg" / "retrieve"):
+          def getCode(code: String)={
+            onCompleteTask[String](
+              actor.ask[StatusReply[String]](ref => RetrieveWebClip2Cmd(code, ref))(timeout, scheduler),
+              it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(RetrieveResponse(it))))
+            )
           }
-        },
-        path("msg" / "retrieve") {
-          post {
-            decodeRequest {
-              entity(as[String]) { str =>
-                val post = Option(om.readValue[RetrieveReq](str, new TypeReference[RetrieveReq] {}))
-                  .filter(_.code != null)
+          concat(
+            get:
+              parameter("code"):
+                code => getCode(code)
+            ,
+            post:
+              decodeRequest :
+                entity(as[String]) { str =>
+                  val post = Option(om.readValue[RetrieveReq](str, new TypeReference[RetrieveReq] {}))
+                    .filter(_.code != null)
 
-                if (post.isEmpty)
-                  complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
-                else {
-                  onCompleteTask[String](
-                    actor.ask[StatusReply[String]](ref => RetrieveWebClip2Cmd(post.get.code, ref))(timeout, scheduler),
-                    it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(RetrieveResponse(it))))
-                  )
+                  if (post.isEmpty) {
+                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
+                  } else {
+                    getCode(post.get.code)
+                  }
                 }
-              }
-            }
-          }
-        },
-        path("msg" / "create") {
-          post {
-            decodeRequest {
-              entity(as[String]) { str: String =>
-                val post = Option(om.readValue[PostReq](str, new TypeReference[PostReq] {}))
-                  .filter(_.msg != null)
+          )
+        ,
+        path("msg" / "create"):
+          def newMsg(msg: String) =
+            onCompleteTask[String](
+              actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(msg, ref))(timeout, scheduler),
+              it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StringResponse(it))))
+            )
+          concat (
+            get :
+              parameter("msg") { msg => newMsg(msg) }
+            ,
+            post:
+              decodeRequest:
+                entity(as[String]) { (str: String) =>
+                  val post = Option(om.readValue[PostReq](str, new TypeReference[PostReq] {}))
+                    .filter(_.msg != null)
 
-                if (post.isEmpty)
-                  complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
-                else {
-                  onCompleteTask[String](
-                    actor.ask[StatusReply[String]](ref => NewWebClip2Cmd(post.get.msg, ref))(timeout, scheduler),
-                    it => complete(HttpEntity(ContentTypes.`application/json`, anyToJson(StringResponse(it))))
-                  )
+                  if (post.isEmpty)
+                    complete(StatusCodes.InternalServerError, HttpEntity(ContentTypes.`text/html(UTF-8)`, anyToJson(ErrorResponse("Empty msg"))))
+                  else {
+                    newMsg(post.get.msg)
+                  }
                 }
-              }
-            }
-          }
-        }
+          )
       )
-    }
-
     Http().newServerAt("0.0.0.0", 8080).bind(route)
-
-    //val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
-    //
-    //println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-    //StdIn.readLine() // let it run until user presses return
-    //bindingFuture
-    //  .flatMap(_.unbind()) // trigger unbinding from the port
-    //  .onComplete(_ => system.terminate()) // and shutdown when done
   }
 
   trait Response
-
   case class PostReq(@BeanProperty msg: String)
-
   case class RetrieveReq(@BeanProperty code: String)
-
   case class ErrorResponse[String](@BeanProperty errorMsg: String) extends Response
-
   case class StringResponse[String](@BeanProperty id: String) extends Response
-
   case class RetrieveResponse[String](@BeanProperty msg: String) extends Response
-
   case class StatusResponse(@BeanProperty status: WebClip2Status) extends Response
-
   implicit def d2Json[A](d: A): String = om.writeValueAsString(d)
-
   case class ConfigResponse(@BeanProperty status: WebClip2Config) extends Response
-
   case class VersionResponse(@BeanProperty version: String)
-
   case class Version(
                       @BeanProperty branch: String,
                       @BeanProperty version: String,
                       @BeanProperty commit: String,
                     ) {
-    def this()={
-      this("","","")
-    }
-
+    def this()={this("","","")}
   }
-}
