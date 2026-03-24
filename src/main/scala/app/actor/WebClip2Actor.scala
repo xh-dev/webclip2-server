@@ -2,9 +2,9 @@ package app.actor
 
 import java.security.SecureRandom
 import java.util.Date
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, Behavior}
-import akka.pattern.StatusReply
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.{ActorRef, Behavior}
+import org.apache.pekko.pattern.StatusReply
 import dev.xethh.utils.BinarySizeUtils.BinarySize
 import me.xethh.utils.dateUtils.D
 

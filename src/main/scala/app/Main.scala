@@ -1,7 +1,7 @@
 package app
 
-import akka.actor.typed.{ActorRef, ActorSystem}
-import akka.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem}
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import app.actor.WebClip2Actor
 import app.actor.WebClip2Actor._
 import dev.xethh.utils.BinarySizeUtils.BinarySize

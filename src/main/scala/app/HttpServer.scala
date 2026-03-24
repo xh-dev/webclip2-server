@@ -1,16 +1,19 @@
 package app
 
-import akka.actor.typed.scaladsl.AskPattern.*
-import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
-import akka.http.scaladsl.server.Directives.*
-import akka.http.scaladsl.server.StandardRoute
-import akka.http.scaladsl.{Http, server}
-import akka.pattern.StatusReply
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Scheduler}
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
+import org.apache.pekko.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.{Http, server}
 import app.actor.WebClip2Actor.*
 import dev.xethh.utils.BinarySizeUtils.BinarySize
 import dev.xethh.utils.binarySizeUtilsJacksonExtension.{Module, Serializer}
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.Askable
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Scheduler}
+import org.apache.pekko.http.scaladsl.server
+import org.apache.pekko.http.scaladsl.server.Directives.complete
+import org.apache.pekko.http.scaladsl.server.StandardRoute
+import org.apache.pekko.pattern.StatusReply
+import org.apache.pekko.util.Timeout
 import tools.jackson.core.`type`.TypeReference
 import tools.jackson.core.{JsonGenerator, JsonParser}
 import tools.jackson.databind.deser.std.StdDeserializer
@@ -29,7 +32,6 @@ import scala.util.{Failure, Success}
 
 object HttpServer {
   class BinarySerializer extends StdSerializer[BinarySize](classOf[BinarySize]) {
-//    @throws(classOf[IOException])
     override def serialize(binarySize: BinarySize, gen: JsonGenerator, context: SerializationContext): Unit = {
       if (binarySize == null) {
         gen.writeNull()
@@ -40,7 +42,6 @@ object HttpServer {
   }
 
   class BinaryDeserializer extends StdDeserializer[BinarySize](classOf[BinarySize]) {
-//    @throws(classOf[IOException])
     override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): BinarySize = {
       if ("null".equals(jsonParser.getValueAsString())) {
         null;
@@ -71,7 +72,7 @@ object HttpServer {
     implicit val timeout: Timeout = Timeout(duration)
     implicit val scheduler: Scheduler = system.scheduler
 
-    import ch.megard.akka.http.cors.scaladsl.CorsDirectives.*
+    import org.apache.pekko.http.cors.scaladsl.CorsDirectives.*
 
 
     def onCompleteTask[Res](
