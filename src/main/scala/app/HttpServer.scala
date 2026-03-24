@@ -1,26 +1,22 @@
 package app
 
+import app.actor.WebClip2Actor.*
+import dev.xethh.utils.BinarySizeUtils.BinarySize
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.Askable
 import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Scheduler}
 import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import org.apache.pekko.http.scaladsl.server.Directives.*
-import org.apache.pekko.http.scaladsl.{Http, server}
-import app.actor.WebClip2Actor.*
-import dev.xethh.utils.BinarySizeUtils.BinarySize
-import dev.xethh.utils.binarySizeUtilsJacksonExtension.{Module, Serializer}
-import org.apache.pekko.actor.typed.scaladsl.AskPattern.Askable
-import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Scheduler}
-import org.apache.pekko.http.scaladsl.server
-import org.apache.pekko.http.scaladsl.server.Directives.complete
 import org.apache.pekko.http.scaladsl.server.StandardRoute
+import org.apache.pekko.http.scaladsl.{Http, server}
 import org.apache.pekko.pattern.StatusReply
 import org.apache.pekko.util.Timeout
 import tools.jackson.core.`type`.TypeReference
 import tools.jackson.core.{JsonGenerator, JsonParser}
 import tools.jackson.databind.deser.std.StdDeserializer
-import tools.jackson.databind.{DeserializationContext, ObjectMapper, SerializationContext}
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.module.SimpleModule
 import tools.jackson.databind.ser.std.StdSerializer
+import tools.jackson.databind.{DeserializationContext, ObjectMapper, SerializationContext}
 import tools.jackson.dataformat.yaml.YAMLFactory
 import tools.jackson.module.scala.DefaultScalaModule
 
@@ -30,36 +26,29 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
-object HttpServer {
-  class BinarySerializer extends StdSerializer[BinarySize](classOf[BinarySize]) {
-    override def serialize(binarySize: BinarySize, gen: JsonGenerator, context: SerializationContext): Unit = {
-      if (binarySize == null) {
-        gen.writeNull()
-      } else {
-        gen.writeRawValue(binarySize.inBytes().toBigInteger.longValue().toString);
-      }
+class BinarySerializer extends StdSerializer[BinarySize](classOf[BinarySize]):
+  override def serialize(binarySize: BinarySize, gen: JsonGenerator, context: SerializationContext): Unit = {
+    if (binarySize == null) {
+      gen.writeNull()
+    } else {
+      gen.writeRawValue(binarySize.inBytes().toBigInteger.longValue().toString);
     }
   }
 
-  class BinaryDeserializer extends StdDeserializer[BinarySize](classOf[BinarySize]) {
-    override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): BinarySize = {
-      if ("null".equals(jsonParser.getValueAsString())) {
-        null;
-      }
-      else {
-        BinarySize.ofByte(jsonParser.getBigIntegerValue.longValue());
-      }
-    }
-  }
+class BinaryDeserializer extends StdDeserializer[BinarySize](classOf[BinarySize]):
+  override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): BinarySize =
+    if ("null".equals(jsonParser.getValueAsString())) { null }
+    else { BinarySize.ofByte(jsonParser.getBigIntegerValue.longValue()) }
 
-  //  val om: ObjectMapper = Module.inject(new ObjectMapper() with ScalaObjectMapper).registerModule(DefaultScalaModule)
-  val om: ObjectMapper = JsonMapper.builder()
-    .addModule(DefaultScalaModule)
-    .addModule(
-      new SimpleModule()
-        .addSerializer(new BinarySerializer())
-        .addDeserializer(classOf[BinarySize], new BinaryDeserializer())
-    ).build()
+val om: ObjectMapper = JsonMapper.builder()
+  .addModule(DefaultScalaModule)
+  .addModule(
+    new SimpleModule()
+      .addSerializer(new BinarySerializer())
+      .addDeserializer(classOf[BinarySize], new BinaryDeserializer())
+  ).build()
+
+object HttpServer:
 
   implicit def anyToJson[A](a: A): String = om.writeValueAsString(a)
 
@@ -157,46 +146,23 @@ object HttpServer {
         }
       )
     }
-
     Http().newServerAt("0.0.0.0", 8080).bind(route)
-
-    //val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
-    //
-    //println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-    //StdIn.readLine() // let it run until user presses return
-    //bindingFuture
-    //  .flatMap(_.unbind()) // trigger unbinding from the port
-    //  .onComplete(_ => system.terminate()) // and shutdown when done
   }
 
   trait Response
-
   case class PostReq(@BeanProperty msg: String)
-
   case class RetrieveReq(@BeanProperty code: String)
-
   case class ErrorResponse[String](@BeanProperty errorMsg: String) extends Response
-
   case class StringResponse[String](@BeanProperty id: String) extends Response
-
   case class RetrieveResponse[String](@BeanProperty msg: String) extends Response
-
   case class StatusResponse(@BeanProperty status: WebClip2Status) extends Response
-
   implicit def d2Json[A](d: A): String = om.writeValueAsString(d)
-
   case class ConfigResponse(@BeanProperty status: WebClip2Config) extends Response
-
   case class VersionResponse(@BeanProperty version: String)
-
   case class Version(
                       @BeanProperty branch: String,
                       @BeanProperty version: String,
                       @BeanProperty commit: String,
                     ) {
-    def this()={
-      this("","","")
-    }
-
+    def this()={this("","","")}
   }
-}
