@@ -28,4 +28,6 @@ jobs:
         # Scala 3 requires JDK 17 or higher
         java-version: '17'
         cache: 'sbt'
+    - name: Setup sbt
+      uses: sbt/setup-sbt@v1
     - run: sbt assembly
