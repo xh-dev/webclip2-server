@@ -1,33 +1,66 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Scala CI
+name: Scala CI with Docker Build
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
-permissions:
-  contents: read
+    tags:
+      - 'v*.*.*' # 當推送到符合 vX.X.X 的 tag 時觸發
 
 jobs:
-  build:
-
+  build-and-push:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        # Scala 3 requires JDK 17 or higher
-        java-version: '17'
-        cache: 'sbt'
-    - name: Setup sbt
-      uses: sbt/setup-sbt@v1
-    - run: sbt assembly
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. 模擬 Jenkins 的 Init Stage: 提取 build.sbt 中的版本號
+      - name: Get Project Version
+        id: get_version
+        run: |
+          VERSION=$(grep -E "^[ ]*version[ ]*:=[ ]*\"([^\"]+)\"$" build.sbt | sed -e "s/version[ ]*:=[ ]*\"\(.*\)\"/\1/g")
+          echo "project_version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      # 2. 編譯專案
+      - name: sbt assembly
+        run: sbt assembly
+
+      # 3. 登入 Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4. 提取 Docker Metadata (標籤處理)
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: xethhung/webclip2-server
+          tags: |
+            type=raw,value=latest
+            type=ref,event=tag
+
+      # 5. 建置並推送 (包含 Jenkins 中的 build-arg)
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # 對應 Jenkins 的 --build-arg
+          build-args: |
+            branchName=${{ github.ref_name }}
+            commitId=${{ github.sha }}
+            C_VERSION=${{ steps.get_version.outputs.project_version }}
