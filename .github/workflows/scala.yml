@@ -21,11 +21,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: graalvm/setup-graalvm@v1
+    - name: Setup JDK
+      uses: actions/setup-java@v4
       with:
-        java-version: '21'      # See 'Options' for more details
-        distribution: 'graalvm' # See 'Supported distributions' for available options
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-    - uses: sbt/setup-sbt@v1
-    - uses: scalacenter/sbt-dependency-submission@v2
+        distribution: 'temurin'
+        # Scala 3 requires JDK 17 or higher
+        java-version: '17'
+        cache: 'sbt'
     - run: sbt assembly
