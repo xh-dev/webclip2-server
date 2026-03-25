@@ -1,4 +1,4 @@
-FROM sbtscala/scala-sbt:17.0.2_1.6.2_3.1.3 as sbt-build
+FROM sbtscala/scala-sbt:eclipse-temurin-17.0.15_6_1.12.7_3.3.7 AS sbt-build
 ARG branchName
 ARG commitId
 ENV branchName=${branchName}
@@ -7,8 +7,9 @@ COPY . /app
 WORKDIR /app
 RUN ["sbt", "assembly"]
 
-FROM xethhung/jdk11-runner:latest
-COPY --from=sbt-build /app/target/scala-2.13/webclip2.jar /app/
+#FROM xethhung/jdk11-runner:latest
+FROM eclipse-temurin:17-jdk-jammy
+COPY --from=sbt-build /app/target/scala-3.3.7/webclip2.jar /app/
 WORKDIR /app
 
 # Exposing web port

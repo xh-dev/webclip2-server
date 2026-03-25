@@ -14,7 +14,7 @@ val jacksonVersion = "3.1.0"
 val jacksonAnnotationVersion = "2.21"
 val pekkoVersion = "1.1.5"
 val pekkoSecondVersion = "1.1.0"
-val logbackVersion = "1.5.13"
+val logbackVersion = "1.5.32"
 
 
 libraryDependencies ++= Seq(
@@ -44,6 +44,7 @@ assembly / mainClass  := mainName
 
 
 assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", "services", _*) => MergeStrategy.filterDistinctLines
   case "reference.conf" => MergeStrategy.concat
   case PathList("META-INF", xs @ _*) => MergeStrategy.discard
   case x => MergeStrategy.first
